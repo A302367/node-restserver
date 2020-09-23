@@ -3,10 +3,16 @@ const bcryptjs = require('bcryptjs');
 // Se pone _ por standard de uso de esta libreria
 const _ = require('underscore');
 const Usuario = require('../models/usuario');
+const { verificaToken, verificaAdminRol } = require('../middlewares/autenticacion');
 const { findLastIndex } = require('underscore');
 const app = express();
 
-app.get('/usuario', function(req, res) {
+app.get('/usuario', verificaToken, (req, res) => {
+    // return res.json({
+    //         usuario: req.usuario,
+    //         nombre: req.usuario.nombre,
+    //         email: req.usuario.email,
+    //     })
     //res.json('Get Usuario');
     // en req.query caen los parametros
     let desde = req.query.desde || 0;
@@ -33,7 +39,7 @@ app.get('/usuario', function(req, res) {
             });
         });
 });
-app.post('/usuario', function(req, res) {
+app.post('/usuario', [verificaToken, verificaAdminRol], (req, res) => {
         let body = req.body;
 
         let usuario = new Usuario({
@@ -61,7 +67,7 @@ app.post('/usuario', function(req, res) {
 
     })
     // buscar en la base de datos y actualizar registro
-app.put("/usuario/:id", function(req, res) {
+app.put("/usuario/:id", [verificaToken, verificaAdminRol], (req, res) => {
     let id = req.params.id;
     // En el array para las propiedades que si se pueden modificar por put
     let body = _.pick(req.body, ['nombre', 'email', 'img', 'role', 'estado']);
@@ -72,7 +78,9 @@ app.put("/usuario/:id", function(req, res) {
     // delete body.google;
 
     Usuario.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, usuarioDB) => {
+
         if (err) {
+            console.log("Errooorrr");
             return res.status(400).json({
                 ok: false,
                 err
@@ -87,7 +95,7 @@ app.put("/usuario/:id", function(req, res) {
 
 });
 
-app.delete('/usuario/:id', function(req, res) {
+app.delete('/usuario/:id', [verificaToken, verificaAdminRol], (req, res) => {
     let id = req.params.id;
 
     //  Eliminacion fisica
